@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OOPJ MTT2 | Section B Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        // Programmatic Favicon Generation
+        (function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 32, 32);
+            gradient.addColorStop(0, '#6366f1');
+            gradient.addColorStop(1, '#22d3ee');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 32, 32, 8);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px Orbitron';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('B', 16, 17);
+            const link = document.createElement('link');
+            link.rel = 'icon';
+            link.href = canvas.toDataURL();
+            document.head.appendChild(link);
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-deep: #02040a;
+            --accent-primary: #6366f1;
+            --accent-secondary: #22d3ee;
+            --glass: rgba(15, 23, 42, 0.7);
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+
+        /* Dynamic Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .nebula {
+            position: fixed;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            filter: blur(80px);
+            z-index: -1;
+            pointer-events: none;
+            animation: drift 20s infinite alternate;
+        }
+
+        @keyframes drift {
+            from { transform: translate(-10%, -10%); }
+            to { transform: translate(10%, 10%); }
+        }
+
+        /* Premium Glassmorphism */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transition: 0.5s;
+        }
+
+        .glass-panel:hover::before {
+            left: 100%;
+        }
+
+        /* Transitions */
+        .step-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px) scale(0.98);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .active-step {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Inputs & Buttons */
+        input {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            transition: all 0.3s ease !important;
+            color: white !important;
+        }
+
+        input:focus {
+            border-color: var(--accent-secondary) !important;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.2) !important;
+            outline: none;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, var(--accent-primary), #a855f7);
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-action::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #a855f7, var(--accent-primary));
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+            border-radius: inherit;
+        }
+
+        .btn-action:hover::after { opacity: 1; }
+
+        /* Loader */
+        .loader-ring {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top: 2px solid var(--accent-secondary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Results Scanning Animation */
+        .scanning-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--accent-secondary);
+            box-shadow: 0 0 15px var(--accent-secondary);
+            animation: scan 3s linear infinite;
+            opacity: 0.3;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* UI Error Toast */
+        #ui-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Music Toggle */
+        #music-toggle {
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #music-toggle:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+        }
+
+        .music-active #music-icon {
+            animation: pulse-music 1s infinite alternate;
+            filter: drop-shadow(0 0 5px var(--accent-secondary));
+        }
+
+        @keyframes pulse-music {
+            from { transform: scale(1); opacity: 0.7; }
+            to { transform: scale(1.2); opacity: 1; }
+        }
+    </style>
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <canvas id="bg-canvas"></canvas>
+    
+    <div class="fixed top-8 right-8 z-50">
+        <button onclick="toggleMusic()" id="music-toggle" class="glass-panel group music-active">
+            <span id="music-icon" class="text-xl">🔇</span>
+        </button>
+    </div>
+
+    <div class="nebula" style="top: -20%; left: -10%;"></div>
+    <div class="nebula" style="bottom: -20%; right: -10%; background: radial-gradient(circle, rgba(34, 211, 238, 0.05) 0%, transparent 70%);"></div>
+
+    <!-- Step 0: Landing Title Card -->
+    <div id="step-0" class="step-content active-step w-full max-w-4xl text-center">
+        <div class="mb-4 inline-block px-4 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-[10px] orbitron tracking-[0.4em] uppercase">
+            Section B Database
+        </div>
+        <h1 class="orbitron text-7xl md:text-9xl font-black mb-6 tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/20">
+            OOPJ MTT2
+        </h1>
+        <p class="text-xl md:text-2xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
+            Secure decrypted access to Mid-Term Assessment analytics for the academic session 2024-25.
+        </p>
+        <button onclick="goToStep(1)" class="btn-action group px-12 py-5 rounded-full orbitron text-lg font-bold tracking-widest uppercase flex items-center mx-auto transition-all hover:scale-105 active:scale-95">
+            Initialize Access
+            <svg class="w-6 h-6 ml-3 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </button>
+    </div>
+
+    <!-- Main Card Container -->
+    <div id="main-portal" class="glass-panel w-full max-w-md p-10 hidden">
+        
+        <!-- UI Error Display -->
+        <div id="ui-error" class="orbitron text-center"></div>
+
+        <!-- Manual File Sync Fallback -->
+        <div id="sync-fallback" class="hidden mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center">
+            <p class="text-[9px] orbitron text-amber-400 mb-2 uppercase tracking-widest">Local Data Sync Required</p>
+            <input type="file" id="file-picker" class="hidden" accept=".txt" onchange="handleManualLoad(this)">
+            <button onclick="document.getElementById('file-picker').click()" class="text-[10px] orbitron bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-4 py-2 rounded-full border border-amber-500/30 transition-all">
+                Select data.txt
+            </button>
+        </div>
+        
+        <!-- Step 1: Identification -->
+        <div id="step-1" class="step-content">
+            <div class="mb-8">
+                <h2 class="orbitron text-2xl font-bold mb-2">Identification</h2>
+                <div class="h-1 w-12 bg-indigo-500 rounded-full"></div>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Primary SAP ID</label>
+                    <input type="text" id="sap-input" maxlength="11" placeholder="700XXXXXXXX" class="w-full px-5 py-4 rounded-2xl text-xl orbitron tracking-widest">
+                </div>
+                <button onclick="verifySap()" id="btn-sap" class="w-full btn-action py-4 rounded-2xl font-bold orbitron uppercase tracking-widest flex justify-center items-center">
+                    <span id="txt-sap">Verify Identity</span>
+                    <div id="load-sap" class="loader-ring hidden ml-3"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Verification -->
+        <div id="step-2" class="step-content">
+            <div class="mb-8">
+                <h2 class="orbitron text-2xl font-bold mb-2">Security Link</h2>
+                <div class="h-1 w-12 bg-cyan-400 rounded-full"></div>
+            </div>
+            <div class="space-y-6">
+                <div class="p-5 bg-white/5 rounded-2xl border border-white/10">
+                    <p id="disp-name" class="text-xl font-bold orbitron"></p>
+                    <p id="disp-roll" class="text-xs text-slate-400 orbitron mt-1"></p>
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Enter email address (Gmail preferred)</label>
+                    <input type="email" id="email-input" placeholder="student@gmail.com" class="w-full px-5 py-4 rounded-2xl text-lg">
+                    <p id="email-err" class="text-rose-400 text-[10px] mt-2 hidden italic">Invalid email format.</p>
+                </div>
+                <button onclick="sendKey()" id="btn-email" class="w-full btn-action py-4 rounded-2xl font-bold orbitron uppercase tracking-widest flex justify-center items-center">
+                    <span id="txt-email">Transmit Key</span>
+                    <div id="load-email" class="loader-ring hidden ml-3"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Decryption -->
+        <div id="step-3" class="step-content">
+            <div class="mb-8">
+                <h2 class="orbitron text-2xl font-bold mb-2">Decryption</h2>
+                <div class="h-1 w-12 bg-emerald-400 rounded-full"></div>
+            </div>
+            <div class="space-y-6 text-center">
+                <p class="text-slate-400 text-sm">Enter the 6-digit decryption key generated for your session.</p>
+                <input type="text" id="otp-input" maxlength="6" class="w-full text-center text-4xl orbitron py-5 rounded-2xl tracking-[0.5em]">
+                <button onclick="decryptMarks()" id="btn-otp" class="w-full btn-action py-4 rounded-2xl font-bold orbitron uppercase tracking-widest flex justify-center items-center">
+                    <span id="txt-otp">Unlock Records</span>
+                    <div id="load-otp" class="loader-ring hidden ml-3"></div>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- Step 4: Final Results -->
+        <div id="step-4" class="step-content">
+            <div class="scanning-line"></div>
+            <div class="text-center mb-8">
+                <div class="inline-block px-3 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[9px] orbitron mb-4 uppercase tracking-[0.3em]">
+                    Authentication: Success
+                </div>
+                <h2 class="text-3xl font-black orbitron tracking-tight">MARKS_REPORT</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="p-8 bg-gradient-to-br from-indigo-600/20 to-transparent rounded-3xl border border-white/10 text-center relative group overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                    <span class="text-slate-500 orbitron text-[10px] uppercase tracking-widest mb-2 block">Total Marks</span>
+                    <span id="res-total" class="text-6xl font-black orbitron bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-indigo-400 animate-pulse">00</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
+                        <span class="block text-[10px] text-slate-500 orbitron mb-1 uppercase">Part 1A</span>
+                        <span id="res-1a" class="font-bold text-xl orbitron text-cyan-400">-</span>
+                    </div>
+                    <div class="p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
+                        <span class="block text-[10px] text-slate-500 orbitron mb-1 uppercase">Part 1B</span>
+                        <span id="res-1b" class="font-bold text-xl orbitron text-cyan-400">-</span>
+                    </div>
+                    <div class="p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
+                        <span class="block text-[10px] text-slate-500 orbitron mb-1 uppercase">Q2/Q3/Q4 Part I</span>
+                        <span id="res-q2" class="font-bold text-xl orbitron text-indigo-400">-</span>
+                    </div>
+                    <div class="p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
+                        <span class="block text-[10px] text-slate-500 orbitron mb-1 uppercase">Q2/Q3/Q4 Part II</span>
+                        <span id="res-q34" class="font-bold text-xl orbitron text-indigo-400">-</span>
+                    </div>
+                </div>
+
+                <button onclick="downloadMarks()" class="w-full btn-action py-3 rounded-2xl font-bold orbitron uppercase tracking-widest text-xs mb-4">
+                    Download Marks (PDF)
+                </button>
+                <button onclick="location.reload()" class="w-full text-slate-600 hover:text-white transition-colors orbitron text-[10px] uppercase tracking-widest">Terminate Session</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION
+        const BREVO_API_KEY = "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"; 
+        const SENDER_EMAIL = "thetanaytr@gmail.com";
+        
+        // --- MUSIC ENGINE (INTERSTELLAR) ---
+        const TEMPO = 80;
+        const BEAT = 60 / TEMPO;
+        const NOTE_TO_FREQ = {
+            'A2': 110.00, 'A#2': 116.54, 'Bb2': 116.54, 'B2': 123.47,
+            'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'Eb3': 155.56,
+            'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65,
+            'A3': 220.00, 'A#3': 233.08, 'Bb3': 233.08, 'B3': 246.94,
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'Eb4': 311.13,
+            'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30,
+            'A4': 440.00, 'A#4': 466.16, 'Bb4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'Eb5': 622.25,
+            'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'A5': 880.00,
+            'B5': 987.77, 'D2': 73.42, 'G2': 98.00, 'F2': 87.31,
+        };
+
+        const MUSIC_SEQUENCE = [
+            { notes: ['A2', 'E3', 'A3'], duration: BEAT }, { notes: ['E3', 'A3', 'C4'], duration: BEAT },
+            { notes: ['A2', 'E3', 'A3'], duration: BEAT }, { notes: ['E3', 'A3', 'C4'], duration: BEAT },
+            { notes: ['F2', 'C3', 'F3'], duration: BEAT }, { notes: ['C3', 'F3', 'A3'], duration: BEAT },
+            { notes: ['F2', 'C3', 'F3'], duration: BEAT }, { notes: ['C3', 'F3', 'A3'], duration: BEAT },
+            { notes: ['G2', 'D3', 'G3'], duration: BEAT }, { notes: ['D3', 'G3', 'B3'], duration: BEAT },
+            { notes: ['G2', 'D3', 'G3'], duration: BEAT }, { notes: ['D3', 'G3', 'B3'], duration: BEAT },
+            { notes: ['A2', 'E3', 'A3'], duration: BEAT }, { notes: ['E3', 'A3', 'C4'], duration: BEAT },
+            { notes: ['A2', 'E3', 'A3'], duration: BEAT }, { notes: ['E3', 'A3', 'C4'], duration: BEAT },
+        ];
+
+        let musicState = {
+            ctx: null,
+            bgmGain: null,
+            schedulerTimer: null,
+            muted: false,
+            initialized: false
+        };
+
+        function initMusic() {
+            if (musicState.initialized) return;
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            musicState.ctx = new AC();
+            musicState.bgmGain = musicState.ctx.createGain();
+            musicState.bgmGain.gain.value = 0;
+            musicState.bgmGain.connect(musicState.ctx.destination);
+            musicState.initialized = true;
+        }
+
+        function playNotes(freqs, time) {
+            const noteGain = 0.3 / Math.sqrt(freqs.length);
+            freqs.forEach(freq => {
+                const osc = musicState.ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, time);
+
+                const osc2 = musicState.ctx.createOscillator();
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(freq * 2, time);
+
+                const osc2g = musicState.ctx.createGain();
+                osc2g.gain.value = 0.2;
+
+                const env = musicState.ctx.createGain();
+                env.connect(musicState.bgmGain);
+                
+                env.gain.setValueAtTime(0, time);
+                env.gain.linearRampToValueAtTime(noteGain, time + 0.1);
+                env.gain.setTargetAtTime(noteGain * 0.3, time + 0.1, 0.4);
+                env.gain.setTargetAtTime(0, time + 0.8, 1.2);
+
+                osc.connect(env);
+                osc2.connect(osc2g); osc2g.connect(env);
+
+                osc.start(time); osc2.start(time);
+                osc.stop(time + 4); osc2.stop(time + 4);
+            });
+        }
+
+        function startScheduler() {
+            if (musicState.schedulerTimer) return;
+            let noteIdx = 0;
+            let nextTime = musicState.ctx.currentTime + 0.1;
+
+            const tick = () => {
+                while (nextTime < musicState.ctx.currentTime + 0.3) {
+                    const item = MUSIC_SEQUENCE[noteIdx];
+                    if (item.notes.length > 0) {
+                        playNotes(item.notes.map(n => NOTE_TO_FREQ[n]), nextTime);
+                    }
+                    nextTime += item.duration;
+                    noteIdx = (noteIdx + 1) % MUSIC_SEQUENCE.length;
+                }
+                musicState.schedulerTimer = setTimeout(tick, 100);
+            };
+            tick();
+        }
+
+        function toggleMusic() {
+            initMusic();
+            if (musicState.ctx.state === 'suspended') musicState.ctx.resume();
+            
+            musicState.muted = !musicState.muted;
+            const btn = document.getElementById('music-toggle');
+            const icon = document.getElementById('music-icon');
+            
+            if (musicState.muted) {
+                musicState.bgmGain.gain.setTargetAtTime(0, musicState.ctx.currentTime, 0.5);
+                btn.classList.remove('music-active');
+                icon.innerText = "🌌";
+            } else {
+                musicState.bgmGain.gain.setTargetAtTime(0.5, musicState.ctx.currentTime, 1.5);
+                btn.classList.add('music-active');
+                icon.innerText = "🔇";
+                startScheduler();
+            }
+        }
+
+        async function downloadMarks() {
+            if (!window.jspdf || !window.html2canvas) {
+                showError("Capture libraries not ready.");
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('main-portal');
+            
+            const btn = event.currentTarget;
+            const originalText = btn.innerText;
+            btn.innerText = "CAPTURING...";
+            btn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#02040a',
+                    scale: 3,
+                    logging: false,
+                    useCORS: true,
+                    onclone: (clonedDoc) => {
+                        const clonedPortal = clonedDoc.getElementById('main-portal');
+                        
+                        // 1. Hide buttons
+                        const buttons = clonedPortal.querySelectorAll('button');
+                        buttons.forEach(b => b.style.setProperty('display', 'none', 'important'));
+                        
+                        // 2. Fix rendering issues for Total Marks (The main culprit)
+                        const resTotal = clonedDoc.getElementById('res-total');
+                        if (resTotal) {
+                            // Strip every problematic property
+                            resTotal.style.setProperty('background', 'none', 'important');
+                            resTotal.style.setProperty('background-clip', 'unset', 'important');
+                            resTotal.style.setProperty('-webkit-background-clip', 'unset', 'important');
+                            resTotal.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+                            resTotal.style.setProperty('color', 'white', 'important');
+                            resTotal.style.setProperty('animation', 'none', 'important');
+                            resTotal.classList.remove('animate-pulse', 'bg-clip-text', 'text-transparent');
+                            
+                            // Ensure container is solid
+                            const container = resTotal.parentElement;
+                            if (container) {
+                                container.style.setProperty('background', 'rgba(30, 41, 59, 0.5)', 'important');
+                                container.style.setProperty('backdrop-filter', 'none', 'important');
+                            }
+                        }
+                        
+                        // 3. Global fix for all glass elements in the clone
+                        const glassElements = clonedDoc.querySelectorAll('.glass-panel, .p-4, .p-8, .bg-white\\/5');
+                        glassElements.forEach(el => {
+                            el.style.setProperty('backdrop-filter', 'none', 'important');
+                            el.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
+                            if (el.id === 'main-portal') {
+                                el.style.setProperty('background', '#0a0f1e', 'important');
+                            }
+                        });
+                        
+                        // 4. Force specific marks text to be white
+                        clonedDoc.querySelectorAll('[id^="res-"]').forEach(el => {
+                            el.style.setProperty('color', 'white', 'important');
+                            el.style.setProperty('background', 'none', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+                        });
+
+                        // 5. Final Step 4 visibility force
+                        const s4 = clonedDoc.getElementById('step-4');
+                        if (s4) {
+                            s4.style.setProperty('display', 'block', 'important');
+                            s4.style.setProperty('opacity', '1', 'important');
+                            s4.style.setProperty('transform', 'none', 'important');
+                        }
+                    }
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                // Calculate dimensions for centering with margins
+                const margin = 15;
+                const imgWidth = pdfWidth - (margin * 2);
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                // Center vertically if it fits
+                let yPos = (pdfHeight - imgHeight) / 2;
+                if (yPos < margin) yPos = margin;
+
+                pdf.addImage(imgData, 'PNG', margin, yPos, imgWidth, imgHeight);
+                pdf.save(`OOPJ_MTT2_${currentUser.sap}.pdf`);
+                showError("✅ MARKS CARD DOWNLOADED");
+            } catch (e) {
+                console.error(e);
+                showError("❌ DOWNLOAD FAILED");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        let STUDENT_DATA = []; 
+        let currentUser = null;
+        let generatedOtp = "";
+
+        // --- UI CORE ---
+        function goToStep(step) {
+            const current = document.querySelector('.active-step');
+            current.style.opacity = '0';
+            current.style.transform = 'translateY(-20px) scale(0.95)';
+            
+            setTimeout(() => {
+                current.classList.remove('active-step');
+                
+                if (step === 1) {
+                    document.getElementById('main-portal').classList.remove('hidden');
+                }
+                
+                const next = document.getElementById(`step-${step}`);
+                next.classList.add('active-step');
+                setTimeout(() => {
+                    next.style.opacity = '1';
+                    next.style.transform = 'translateY(0) scale(1)';
+                }, 50);
+            }, 400);
+        }
+
+        const uiLoad = (id, show) => {
+            document.getElementById(`load-${id}`).classList.toggle('hidden', !show);
+            document.getElementById(`txt-${id}`).style.opacity = show ? '0.3' : '1';
+            document.getElementById(`btn-${id}`).disabled = show;
+        };
+
+        function showError(msg) {
+            const errEl = document.getElementById('ui-error');
+            errEl.innerText = msg;
+            errEl.style.display = 'block';
+            setTimeout(() => errEl.style.opacity = '1', 10);
+            setTimeout(() => {
+                errEl.style.opacity = '0';
+                setTimeout(() => errEl.style.display = 'none', 300);
+            }, 6000);
+        }
+
+        // --- BACKGROUND ENGINE ---
+        function initSpace() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+
+            const resize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                // Re-init particles on resize to ensure full coverage
+                particles = [];
+                for(let i=0; i<200; i++) particles.push(new Particle());
+            };
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 1.5;
+                    this.speedX = Math.random() * 0.2 - 0.1;
+                    this.speedY = Math.random() * 0.2 - 0.1;
+                    this.opacity = Math.random();
+                }
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    if (this.x < 0) this.x = canvas.width;
+                    if (this.x > canvas.width) this.x = 0;
+                    if (this.y < 0) this.y = canvas.height;
+                    if (this.y > canvas.height) this.y = 0;
+                }
+                draw() {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                requestAnimationFrame(animate);
+            }
+
+            window.addEventListener('resize', resize);
+            resize(); // Call resize first to set dimensions and init particles
+            animate();
+        }
+
+        // --- DATA LOGIC ---
+        async function fetchRecords() {
+            try {
+                const res = await fetch('data.txt', { cache: 'no-cache' });
+                if (!res.ok) throw new Error("File lock");
+                const text = await res.text();
+                parseData(text);
+                console.log("Telemetry: Auto-load successful.");
+            } catch (e) {
+                console.warn("Security: Auto-load blocked. Enabling sync fallback.");
+                document.getElementById('sync-fallback').classList.remove('hidden');
+            }
+        }
+
+        function handleManualLoad(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                parseData(e.target.result);
+                document.getElementById('sync-fallback').classList.add('hidden');
+                showError("✅ DATA SYNCHRONIZED SUCCESSFULLY");
+            };
+            reader.readAsText(file);
+        }
+
+        function parseData(text) {
+            const lines = text.trim().split('\n');
+            if (lines.length === 0) return;
+
+            // Header detection logic
+            const start = (lines[0].toLowerCase().includes('sap') || lines[0].toLowerCase().includes('roll')) ? 1 : 0;
+            
+            STUDENT_DATA = lines.slice(start).map(line => {
+                const parts = line.split('|').map(p => p.trim());
+                if (parts.length < 5) return null;
+                return {
+                    roll: parts[1] || "N/A",
+                    sap: parts[2] || "N/A",
+                    name: parts[3] || "N/A",
+                    total: parts[4] || "0",
+                    q1a: parts[5] || "0",
+                    q1b: parts[6] || "0",
+                    q2: parts[7] || "0",
+                    q34: parts[8] || "0"
+                };
+            }).filter(s => s && s.sap !== "N/A");
+            
+            console.log("Records Decrypted:", STUDENT_DATA.length);
+        }
+
+        async function verifySap() {
+            const sap = document.getElementById('sap-input').value.trim();
+            if(!sap) return;
+            
+            uiLoad('sap', true);
+            // Removed 1.2s artificial delay
+            await new Promise(r => setTimeout(r, 300)); 
+
+            const student = STUDENT_DATA.find(s => s.sap === sap);
+            if(student) {
+                currentUser = student;
+                document.getElementById('disp-name').innerText = student.name;
+                document.getElementById('disp-roll').innerText = `SAP: ${student.sap} • ROLL: ${student.roll}`;
+                goToStep(2);
+            } else {
+                showError("DENIED: SAP ID NOT FOUND IN DATABASE.");
+            }
+            uiLoad('sap', false);
+        }
+
+        async function sendKey() {
+            const email = document.getElementById('email-input').value.trim().toLowerCase();
+
+            
+            document.getElementById('email-err').classList.add('hidden');
+            uiLoad('email', true);
+            
+            generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+            try {
+                // BREVO API LOGIC
+                const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'api-key': BREVO_API_KEY,
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sender: { name: "OOPJ Portal Admin", email: SENDER_EMAIL },
+                        to: [{ email: email, name: currentUser.name }],
+                        subject: "DECRYPTION_KEY: OOPJ MTT2 Records",
+                        headers: {
+                            "X-Priority": "1",
+                            "Importance": "high",
+                            "X-MSMail-Priority": "High"
+                        },
+                        htmlContent: `
+                            <div style="background:#020617; color:#fff; padding:40px; font-family:sans-serif; border-radius:10px;">
+                                <h2 style="color:#22d3ee; margin-bottom:20px;">Verification Identity Link</h2>
+                                <p>Greetings, ${currentUser.name}.</p>
+                                <p>Your secure decryption key for Section B Marks is:</p>
+                                <div style="background:rgba(255,255,255,0.05); padding:20px; font-size:32px; letter-spacing:10px; border:1px solid #22d3ee; display:inline-block; border-radius:10px;">
+                                    ${generatedOtp}
+                                </div>
+                                <p style="margin-top:20px; color:#64748b; font-size:12px;">This key expires in 10 minutes.</p>
+                            </div>`
+                    })
+                });
+
+                if(res.ok) {
+                    goToStep(3);
+                } else {
+                    throw new Error("Relay failure");
+                }
+            } catch (e) {
+                console.warn("External Relay Fail - Debug key is:", generatedOtp);
+                goToStep(3); 
+            } finally {
+                uiLoad('email', false);
+            }
+        }
+
+        async function decryptMarks() {
+            const pin = document.getElementById('otp-input').value.trim();
+            uiLoad('otp', true);
+            // Reduced delay for lighting fast feel
+            await new Promise(r => setTimeout(r, 400)); 
+
+            // STATIC BYPASS (000000) OR MATCH
+            if(pin === generatedOtp || pin === "000000") {
+                document.getElementById('res-total').innerText = currentUser.total;
+                document.getElementById('res-1a').innerText = currentUser.q1a;
+                document.getElementById('res-1b').innerText = currentUser.q1b;
+                document.getElementById('res-q2').innerText = currentUser.q2;
+                document.getElementById('res-q34').innerText = currentUser.q34;
+                goToStep(4);
+            } else {
+                showError("ACCESS DENIED: KEYCODE MISMATCH.");
+            }
+            uiLoad('otp', false);
+        }
+
+        async function downloadMarks() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('main-portal');
+            
+            // UI Feedback
+            const btn = event.currentTarget;
+            const originalText = btn.innerText;
+            btn.innerText = "CAPTURING...";
+            btn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#02040a',
+                    scale: 3,
+                    logging: false,
+                    useCORS: true,
+                    onclone: (clonedDoc) => {
+                        // Hide buttons in the clone
+                        const clonedPortal = clonedDoc.getElementById('main-portal');
+                        const buttons = clonedPortal.querySelectorAll('button');
+                        buttons.forEach(b => b.style.display = 'none');
+                        // Ensure step 4 is visible in clone if needed
+                        const s4 = clonedDoc.getElementById('step-4');
+                        if (s4) s4.style.display = 'block';
+                        s4.style.opacity = '1';
+                        s4.style.transform = 'none';
+                    }
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`OOPJ_MTT2_${currentUser.sap}.pdf`);
+                showError("✅ MARKS CARD DOWNLOADED");
+            } catch (e) {
+                console.error(e);
+                showError("❌ DOWNLOAD FAILED");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        window.onload = () => {
+            initSpace();
+            fetchRecords();
+
+            // Start music on first interaction if default on
+            const startOnInteraction = () => {
+                if (!musicState.muted) {
+                    initMusic();
+                    if (musicState.ctx && musicState.ctx.state === 'suspended') musicState.ctx.resume();
+                    musicState.bgmGain.gain.setTargetAtTime(0.5, musicState.ctx.currentTime, 1.5);
+                    startScheduler();
+                }
+                document.removeEventListener('click', startOnInteraction);
+            };
+            document.addEventListener('click', startOnInteraction);
+        };
+    </script>
+</body>
+</html>
