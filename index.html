@@ -753,11 +753,15 @@
             document.getElementById('email-err').classList.add('hidden');
             uiLoad('email', true);
             
-            // FIX #1: ONLY GENERATE OTP IF NOT ALREADY GENERATED (prevents regeneration on retry)
+            // FIX: ONLY GENERATE OTP IF NOT ALREADY GENERATED (prevents regeneration on retry)
             if (!generatedOtp) {
                 generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-                console.log("📧 Generated OTP:", generatedOtp);
+                console.log("📧 Generated OTP in sendKey:", generatedOtp);
             }
+            
+            // STORE THE CURRENT OTP IN A LOCAL VAR TO ENSURE IT'S USED IN EMAIL
+            const currentOtp = generatedOtp;
+            console.log("📧 OTP being sent in email:", currentOtp);
 
             try {
                 // BREVO API LOGIC
@@ -783,7 +787,7 @@
                                 <p>Greetings, ${currentUser.name}.</p>
                                 <p>Your secure decryption key for Section B Marks is:</p>
                                 <div style="background:rgba(255,255,255,0.05); padding:20px; font-size:32px; letter-spacing:10px; border:1px solid #22d3ee; display:inline-block; border-radius:10px;">
-                                    ${generatedOtp}
+                                    ${currentOtp}
                                 </div>
                                 <p style="margin-top:20px; color:#64748b; font-size:12px;">This key expires in 10 minutes.</p>
                             </div>`
@@ -791,12 +795,13 @@
                 });
 
                 if(res.ok) {
+                    console.log("✅ Email sent successfully with OTP:", currentOtp);
                     goToStep(3);
                 } else {
                     throw new Error("Relay failure");
                 }
             } catch (e) {
-                console.warn("External Relay Fail - Debug key is:", generatedOtp);
+                console.warn("External Relay Fail - Debug key is:", currentOtp);
                 goToStep(3); 
             } finally {
                 uiLoad('email', false);
@@ -805,6 +810,8 @@
 
         async function decryptMarks() {
             const pin = document.getElementById('otp-input').value.trim();
+            console.log("🔐 User entered OTP:", pin);
+            console.log("🔐 Expected OTP:", generatedOtp);
             uiLoad('otp', true);
             // Reduced delay for lighting fast feel
             await new Promise(r => setTimeout(r, 400)); 
