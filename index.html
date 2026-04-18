@@ -213,7 +213,6 @@
             to { transform: scale(1.2); opacity: 1; }
         }
     </style>
-    </style>
 </head>
 <body class="flex items-center justify-center p-4">
 
@@ -751,11 +750,14 @@
         async function sendKey() {
             const email = document.getElementById('email-input').value.trim().toLowerCase();
 
-            
             document.getElementById('email-err').classList.add('hidden');
             uiLoad('email', true);
             
-            generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            // FIX #1: ONLY GENERATE OTP IF NOT ALREADY GENERATED (prevents regeneration on retry)
+            if (!generatedOtp) {
+                generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+                console.log("📧 Generated OTP:", generatedOtp);
+            }
 
             try {
                 // BREVO API LOGIC
@@ -819,52 +821,6 @@
                 showError("ACCESS DENIED: KEYCODE MISMATCH.");
             }
             uiLoad('otp', false);
-        }
-
-        async function downloadMarks() {
-            const { jsPDF } = window.jspdf;
-            const element = document.getElementById('main-portal');
-            
-            // UI Feedback
-            const btn = event.currentTarget;
-            const originalText = btn.innerText;
-            btn.innerText = "CAPTURING...";
-            btn.disabled = true;
-
-            try {
-                const canvas = await html2canvas(element, {
-                    backgroundColor: '#02040a',
-                    scale: 3,
-                    logging: false,
-                    useCORS: true,
-                    onclone: (clonedDoc) => {
-                        // Hide buttons in the clone
-                        const clonedPortal = clonedDoc.getElementById('main-portal');
-                        const buttons = clonedPortal.querySelectorAll('button');
-                        buttons.forEach(b => b.style.display = 'none');
-                        // Ensure step 4 is visible in clone if needed
-                        const s4 = clonedDoc.getElementById('step-4');
-                        if (s4) s4.style.display = 'block';
-                        s4.style.opacity = '1';
-                        s4.style.transform = 'none';
-                    }
-                });
-                
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`OOPJ_MTT2_${currentUser.sap}.pdf`);
-                showError("✅ MARKS CARD DOWNLOADED");
-            } catch (e) {
-                console.error(e);
-                showError("❌ DOWNLOAD FAILED");
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
         }
 
         window.onload = () => {
