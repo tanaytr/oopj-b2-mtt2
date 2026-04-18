@@ -1,11 +1,11 @@
-name: Deploy
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -13,22 +13,21 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Inject API Key into HTML
-        env:
-          BREVO_KEY: ${{ secrets.BREVO_API_KEY }}
+      - name: Inject Brevo API Key
         run: |
-          sed -i "s/BREVO_API_KEY_PLACEHOLDER/$BREVO_KEY/g" index.html
-          echo "✅ API key injected"
+          sed -i "s/BREVO_API_KEY_PLACEHOLDER/${{ secrets.BREVO_API_KEY }}/g" index.html
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v2
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
