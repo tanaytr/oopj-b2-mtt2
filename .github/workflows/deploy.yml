@@ -1,36 +1,21 @@
-name: Deploy to GitHub Pages
+name: Deploy
 
 on:
   push:
-    branches:
-      - main  # or your default branch
-  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
       
-      - name: Inject secret into HTML
+      - name: Inject secrets into HTML
         run: |
-          sed "s|\${{ secrets.BREVO_API_KEY }}|${{ secrets.BREVO_API_KEY }}|g" index.html > index.html.tmp
-          mv index.html.tmp index.html
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
+          sed -i "s/\${{ secrets.BREVO_API_KEY }}/${{ secrets.BREVO_API_KEY }}/g" index.html
       
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
